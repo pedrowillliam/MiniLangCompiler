@@ -1,0 +1,23 @@
+programa testeErro
+{ 
+  OBJETIVO: Testar se o analisador sintático detecta a falta de ';' 
+}
+
+var contador inteiro;
+var total inteiro;     { <--- Corrigido: Adicionei 'var' aqui }
+
+inicio
+  contador : 1;
+  total : 0;
+
+  enquanto (contador <= 10) faca
+  inicio
+     total : total + contador;
+     
+     { --- O ERRO REAL ESTÁ AQUI EMBAIXO --- }
+     { Falta um ';' após o comando escreva }
+     escreva(contador)
+     
+     contador : contador + 1;
+  fim;
+fim
