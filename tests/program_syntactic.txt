@@ -1,0 +1,10 @@
+programa erroSintaticoSe
+var x inteiro;
+
+inicio
+  x : 10;
+  
+  { ERRO: Falta '(' e ')' ao redor de x > 5 }
+  se x > 5 entao 
+      x : 0;
+fim

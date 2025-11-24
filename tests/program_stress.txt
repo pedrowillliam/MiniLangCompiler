@@ -1,0 +1,30 @@
+programa testeComplexo
+var a inteiro;
+var b inteiro;
+var controle booleano;
+
+inicio
+  a : 10;
+  b : 0;
+  controle : verdadeiro;
+
+  { Teste de precedencia: Multiplicacao deve vir antes da soma }
+  { Pela gramatica, 'termo' (com *) tem prioridade sobre 'expr_simples' (com +) }
+  b : a + 5 * 2; 
+  escreva(b); { Esperado: 20, Se der 30 a precedencia esta errada }
+
+  enquanto (a > 0) faca
+  inicio
+     a : a - 1;
+
+     { Teste de operadores logicos e parenteses }
+     se ( (a < 5) e controle ) entao
+     inicio
+         escreva(a);
+         continue; { Pula o resto do loop }
+     fim;
+
+     se (a == 2) entao
+         break; { Sai do loop }
+  fim;
+fim
