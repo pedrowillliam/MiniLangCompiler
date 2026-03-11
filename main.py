@@ -32,16 +32,9 @@ def main():
     # 1. Definição do arquivo de entrada (PADRÃO)
     # ---------------------------------------------------------
     
-    # Caso 1: Teste de Sucesso 
-    arquivo_padrao = 'tests/program_sucess.txt'
+    # Caso teste:
+    arquivo_padrao = 'tests/program_semantic_errors.txt'
     
-    # Caso 2: Teste de Erro 
-    #arquivo_padrao = 'tests/program_error.txt'
-
-    #caso 3: Teste de Sucesso 2 ( Fazer )
-
-    #caso 4: Tesde de Erro 2 ( Fazer )
-
     # Lógica de Seleção:
     # Se o usuário passou um arquivo no terminal, usa ele. Senão, usa o padrão acima.
     if len(sys.argv) > 1:
@@ -70,12 +63,17 @@ def main():
         print("\n✅ COMPILAÇÃO CONCLUÍDA: O código é válido segundo a gramática!")
 
     except SyntaxError as e:
-        print(f"\n❌ ERRO DE COMPILAÇÃO DETECTADO:")
+        print(f"\n❌ ERRO SINTÁTICO DETECTADO:")
         print(f"   {e}")
     except Exception as e:
-        print(f"\n❌ ERRO INTERNO (BUG): {e}")
-        import traceback
-        traceback.print_exc()
+        # Verifica se é um erro semântico que nós mesmos criamos
+        if "Erro Semântico" in str(e):
+            print(f"\n❌ ERRO SEMÂNTICO DETECTADO:")
+            print(f"   {e}")
+        else:
+            print(f"\n❌ ERRO INTERNO (BUG): {e}")
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
     main()

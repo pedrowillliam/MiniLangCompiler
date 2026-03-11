@@ -1,0 +1,56 @@
+programa testeSemantico
+
+{ 1. Declarações válidas }
+var numero inteiro;
+var letra char;
+var flag booleano;
+
+{ 2. Erro: Redeclaração no mesmo escopo (Descomente a linha abaixo para testar) }
+{ var numero booleano; }
+
+{ Função auxiliar válida }
+funcao calcular(a inteiro b inteiro): inteiro
+inicio
+  { Erro: Retorno de tipo inválido (Descomente para testar) }
+  { retorne verdadeiro; }
+  
+  retorne a + b;
+fim;
+
+procedimento exibir(c char)
+inicio
+  escreva(c);
+fim;
+
+{ Bloco Principal }
+inicio
+  numero : 10;
+  letra : 'X';
+  flag : verdadeiro;
+
+  { --- TESTES DE ERROS SEMÂNTICOS --- }
+  { Instrução: O compilador vai parar no primeiro erro ativo. }
+  { Comente o erro atual adicionando chaves ao redor dele para ver o compilador pegar o proximo }
+
+  { ERRO A: Variável não declarada }
+  {total : 100;}
+
+  { ERRO B: Atribuição de tipo incompatível (inteiro recebe booleano) }
+  {numero : flag;}
+
+  { ERRO C: Operação matemática com tipos incompatíveis (inteiro + char) }
+  {numero : numero + letra;}
+
+  { ERRO D: Condição do 'se' não é booleana (é um inteiro) }
+  {se (numero) entao
+  inicio
+     escreva(numero);
+  fim;}
+
+  { ERRO E: Chamada de função com quantidade errada de argumentos }
+  {numero : calcular(10);}
+
+  { ERRO F: Chamada de função com tipo errado de argumento (passando char no lugar de inteiro) }
+  numero : calcular(10, letra);
+
+fim
