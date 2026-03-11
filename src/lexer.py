@@ -4,11 +4,14 @@ import re
 # A adição de \\b garante que palavras como 'exemplo' não sejam confundidas com 'e'
 TOKEN_TYPES = [
     ('COMENTARIO', r'\{.*?\}'),
+    ('LITERAL_CHAR', r"'[^']'"),
     ('NUMERO',     r'\d+'),
     ('PROGRAMA',   r'programa\b'),     # Adicionado \b
     ('VAR',        r'var\b'),          # Adicionado \b
     ('INTEIRO',    r'inteiro\b'),
     ('BOOLEANO',   r'booleano\b'),
+    ('CHAR',         r'char\b'),       # NOVO: Palavra reservada char
+    ('VOID',         r'void\b'),       # NOVO: Palavra reservada void
     ('PROCEDIMENTO', r'procedimento\b'),
     ('FUNCAO',     r'funcao\b'),
     ('INICIO',     r'inicio\b'),
