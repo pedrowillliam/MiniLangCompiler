@@ -1,0 +1,59 @@
+programa demonstracaoFinal
+
+{ Declarações Globais }
+var globalNum inteiro;
+var globalStatus booleano;
+
+{ Função com retorno de tipo Inteiro }
+funcao calcularSoma(a inteiro b inteiro): inteiro
+var resultadoLocal inteiro;
+inicio
+    resultadoLocal : a + b;
+    retorne resultadoLocal;
+fim;
+
+{ Procedimento (void) que usa o tipo Char }
+procedimento processarLetra(letra char)
+inicio
+    escreva(letra);
+    { Procedimentos não precisam de retorne, ou podem usar 'retorne;' sem valor }
+fim;
+
+{ Função Booleana para testes lógicos }
+funcao checarLimite(valor inteiro): booleano
+inicio
+    se (valor > 100) entao
+    inicio
+        retorne verdadeiro;
+    fim
+    senao
+    inicio
+        retorne falso;
+    fim;
+fim;
+
+{ Bloco Principal }
+inicio
+    globalNum : 50;
+    globalStatus : falso;
+
+    { Chamada de função e atribuição correta de tipos }
+    globalNum : calcularSoma(globalNum, 60);
+
+    { Uso do tipo Char em procedimento }
+    processarLetra('A');
+
+    { Teste de escopo e controle de fluxo }
+    se (checarLimite(globalNum)) entao
+    inicio
+        globalStatus : verdadeiro;
+        escreva(globalNum);
+    fim;
+
+    { Exemplo de laço enquanto }
+    enquanto (globalNum > 100) faca
+    inicio
+        globalNum : globalNum - 1;
+    fim;
+
+fim
