@@ -1,19 +1,13 @@
-from src.tabela_simbolos import TabelaSimbolos  
+from src.ast_node import *
 
 class ParserTopDown:
     def __init__(self, tokens):
         self.tokens = tokens
         self.pos = 0
         self.current_token = self.tokens[self.pos]
-        
-        self.tabela = TabelaSimbolos()
-        self.tipo_retorno_atual = None 
 
     def error(self, msg):
         raise SyntaxError(f"Erro Sintático na linha {self.current_token.line}: {msg}. Encontrado: '{self.current_token.value}'")
-
-    def semantic_error(self, msg):
-        raise Exception(f"Erro Semântico na linha {self.current_token.line}: {msg}")
 
     def eat(self, token_type):
         if self.current_token.type == token_type:
@@ -28,58 +22,50 @@ class ParserTopDown:
             return self.tokens[self.pos + 1]
         return None
 
-    # --- Funções Auxiliares de Semântica ---
-    def declarar_simbolo(self, nome, categoria, tipo, params=None):
-        """Verifica duplicação antes de declarar na tabela."""
-        escopo_atual = self.tabela.pilha_escopos[-1]
-        if nome in escopo_atual:
-            self.semantic_error(f"O identificador '{nome}' já foi declarado neste escopo.")
-        self.tabela.declarar(nome, categoria, tipo, params)
-
-    def buscar_simbolo(self, nome):
-        """Busca e lança erro se não existir."""
-        simbolo = self.tabela.buscar(nome)
-        if not simbolo:
-            self.semantic_error(f"Variável ou função '{nome}' não declarada.")
-        return simbolo
-
-    # --- Regras da Gramática ---
+    # --- Regras da Gramática (Montando a AST) ---
     def parse_programa(self):
         print(f"-> Iniciando análise do Programa...")
         self.eat('PROGRAMA')
-        self.eat('ID')
-        self.parse_bloco()
+        nome_programa = self.current_token.value
+        self.eat('ID') 
+        
+        bloco_node = self.parse_bloco()
+        
         if self.current_token.type != 'EOF':
             self.error("Código extra encontrado após o fim do programa")
-        print("<- Análise Sintática e Semântica concluídas com sucesso!")
+            
+        print("<- Árvore Sintática (AST) gerada com sucesso!")
+        return ProgramNode(nome_programa, bloco_node)
 
     def parse_bloco(self):
+        vars_decl = []
+        subrotinas = []
+        comandos = []
+
         while self.current_token.type == 'VAR':
-            self.parse_decl_var()
+            vars_decl.append(self.parse_decl_var())
+            
         while self.current_token.type in ('PROCEDIMENTO', 'FUNCAO'):
-            self.parse_decl_subrotina()
-        self.parse_corpo()
+            subrotinas.append(self.parse_decl_subrotina())
+            
+        comandos = self.parse_corpo()
+        
+        return BlockNode(vars_decl, subrotinas, comandos)
 
     def parse_decl_var(self):
         self.eat('VAR')
-        ids = self.parse_lista_ids() 
+        id_nodes = self.parse_lista_ids() 
         tipo = self.parse_tipo()      
-        
-        if tipo == 'void':
-            self.semantic_error("Variáveis não podem ser do tipo 'void'.")
-            
         self.eat('PONTO_VIRG')
         
-        # SEMÂNTICO: Declara todas as variáveis da lista na tabela
-        for nome_id in ids:
-            self.declarar_simbolo(nome_id, 'variavel', tipo)
+        return VarDeclNode(id_nodes, tipo)
 
     def parse_lista_ids(self):
         ids = []
-        ids.append(self.current_token.value)
+        ids.append(IdentifierNode(self.current_token))
         self.eat('ID')
         while self.current_token.type == 'ID':
-            ids.append(self.current_token.value)
+            ids.append(IdentifierNode(self.current_token))
             self.eat('ID')
         return ids
 
@@ -93,9 +79,9 @@ class ParserTopDown:
 
     def parse_decl_subrotina(self):
         if self.current_token.type == 'PROCEDIMENTO':
-            self.parse_decl_procedimento()
+            return self.parse_decl_procedimento()
         elif self.current_token.type == 'FUNCAO':
-            self.parse_decl_funcao()
+            return self.parse_decl_funcao()
 
     def parse_decl_procedimento(self):
         self.eat('PROCEDIMENTO')
@@ -104,24 +90,10 @@ class ParserTopDown:
         self.eat('ABRE_PAR')
         params = self.parse_lista_params()
         self.eat('FECHA_PAR')
-        
-        # SEMÂNTICO: Registra o procedimento como uma função void
-        tipos_params = [p['tipo'] for p in params]
-        self.declarar_simbolo(nome, 'funcao', 'void', tipos_params)
-        
-        self.tabela.entrar_escopo()
-        # Declara os parâmetros como variáveis locais
-        for p in params:
-            self.declarar_simbolo(p['nome'], 'variavel', p['tipo'])
-            
-        old_retorno = self.tipo_retorno_atual
-        self.tipo_retorno_atual = 'void'
-        
-        self.parse_bloco()
+        bloco = self.parse_bloco()
         self.eat('PONTO_VIRG')
         
-        self.tabela.sair_escopo()
-        self.tipo_retorno_atual = old_retorno
+        return SubroutineNode(is_function=False, name=nome, params=params, return_type='void', block=bloco)
 
     def parse_decl_funcao(self):
         self.eat('FUNCAO')
@@ -132,23 +104,10 @@ class ParserTopDown:
         self.eat('FECHA_PAR')
         self.eat('DOIS_PONTOS')
         tipo_retorno = self.parse_tipo()
-        
-        # SEMÂNTICO: Registra a função
-        tipos_params = [p['tipo'] for p in params]
-        self.declarar_simbolo(nome, 'funcao', tipo_retorno, tipos_params)
-        
-        self.tabela.entrar_escopo()
-        for p in params:
-            self.declarar_simbolo(p['nome'], 'variavel', p['tipo'])
-            
-        old_retorno = self.tipo_retorno_atual
-        self.tipo_retorno_atual = tipo_retorno
-        
-        self.parse_bloco()
+        bloco = self.parse_bloco()
         self.eat('PONTO_VIRG')
         
-        self.tabela.sair_escopo()
-        self.tipo_retorno_atual = old_retorno
+        return SubroutineNode(is_function=True, name=nome, params=params, return_type=tipo_retorno, block=bloco)
 
     def parse_lista_params(self):
         params = []
@@ -159,219 +118,192 @@ class ParserTopDown:
         return params
 
     def parse_param(self):
-        nome = self.current_token.value
+        id_node = IdentifierNode(self.current_token)
         self.eat('ID')
         tipo = self.parse_tipo()
-        return {'nome': nome, 'tipo': tipo}
+        return ParamNode(id_node, tipo)
 
     def parse_corpo(self):
+        comandos = []
         self.eat('INICIO')
         while self.current_token.type != 'FIM':
-            self.parse_comando()
+            comandos.append(self.parse_comando())
             self.eat('PONTO_VIRG')
         self.eat('FIM')
+        return comandos
 
     def parse_comando(self):
         tok = self.current_token.type
         if tok == 'INICIO':
-            self.tabela.entrar_escopo()
-            self.parse_corpo()
-            self.tabela.sair_escopo()
+            comandos = self.parse_corpo()
+            # Um bloco interno de comandos retorna um BlockNode simplificado (sem var/func)
+            return BlockNode([], [], comandos)
         elif tok == 'SE':
-            self.parse_se()
+            return self.parse_se()
         elif tok == 'ENQUANTO':
-            self.parse_enquanto()
+            return self.parse_enquanto()
         elif tok == 'RETORNE':
-            self.parse_retorne()
+            return self.parse_retorne()
         elif tok == 'BREAK':
+            token = self.current_token
             self.eat('BREAK')
+            return BreakNode(token)
         elif tok == 'CONTINUE':
+            token = self.current_token
             self.eat('CONTINUE')
+            return ContinueNode(token)
         elif tok == 'ESCREVA':
-            self.parse_escreva()
+            return self.parse_escreva()
         elif tok == 'ID':
             proximo = self.peek()
             if proximo and proximo.type == 'DOIS_PONTOS':
-                self.parse_atribuicao()
+                return self.parse_atribuicao()
             elif proximo and proximo.type == 'ABRE_PAR':
-                self.parse_chamada_subrotina()
+                return self.parse_chamada_subrotina()
             else:
                 self.error("Esperado ':' ou '(' após ID")
         else:
             self.error("Comando inválido")
 
     def parse_atribuicao(self):
-        nome = self.current_token.value
+        id_token = self.current_token
         self.eat('ID')
         self.eat('DOIS_PONTOS')
+        expr_node = self.parse_expressao()
         
-        simbolo = self.buscar_simbolo(nome)
-        if simbolo.categoria != 'variavel':
-            self.semantic_error(f"'{nome}' não é uma variável atribuível.")
-            
-        tipo_expr = self.parse_expressao()
-        
-        # SEMÂNTICO: Checagem de Tipo Forte
-        if simbolo.tipo != tipo_expr:
-            self.semantic_error(f"Atribuição inválida. Variável '{nome}' é '{simbolo.tipo}', mas recebeu '{tipo_expr}'.")
+        return AssignNode(IdentifierNode(id_token), expr_node)
 
     def parse_chamada_subrotina(self):
-        nome = self.current_token.value
+        id_token = self.current_token
         self.eat('ID')
-        
-        simbolo = self.buscar_simbolo(nome)
-        if simbolo.categoria != 'funcao':
-            self.semantic_error(f"'{nome}' não é uma função/procedimento.")
-            
         self.eat('ABRE_PAR')
-        args_tipos = self.parse_lista_exp()
+        args = self.parse_lista_exp()
         self.eat('FECHA_PAR')
         
-        # SEMÂNTICO: Valida quantidade e tipos dos argumentos
-        if len(args_tipos) != len(simbolo.params):
-            self.semantic_error(f"Função '{nome}' espera {len(simbolo.params)} argumentos, mas recebeu {len(args_tipos)}.")
-            
-        for i, (tipo_arg, tipo_param) in enumerate(zip(args_tipos, simbolo.params)):
-            if tipo_arg != tipo_param:
-                self.semantic_error(f"Argumento {i+1} da função '{nome}' deveria ser '{tipo_param}', mas é '{tipo_arg}'.")
-                
-        return simbolo.tipo # Retorna o tipo da função para a expressão
+        return FunctionCallNode(IdentifierNode(id_token), args)
 
     def parse_se(self):
         self.eat('SE')
         self.eat('ABRE_PAR')
-        tipo_expr = self.parse_expressao()
-        if tipo_expr != 'booleano':
-            self.semantic_error("A condição do 'se' deve ser uma expressão booleana.")
+        cond_node = self.parse_expressao()
         self.eat('FECHA_PAR')
         self.eat('ENTAO')
-        self.parse_comando()
+        true_block = self.parse_comando()
+        
+        false_block = None
         if self.current_token.type == 'SENAO':
             self.eat('SENAO')
-            self.parse_comando()
+            false_block = self.parse_comando()
+            
+        return IfNode(cond_node, true_block, false_block)
 
     def parse_enquanto(self):
         self.eat('ENQUANTO')
         self.eat('ABRE_PAR')
-        tipo_expr = self.parse_expressao()
-        if tipo_expr != 'booleano':
-            self.semantic_error("A condição do 'enquanto' deve ser booleana.")
+        cond_node = self.parse_expressao()
         self.eat('FECHA_PAR')
         self.eat('FACA')
-        self.parse_comando()
+        body_block = self.parse_comando()
+        
+        return WhileNode(cond_node, body_block)
 
     def parse_retorne(self):
         self.eat('RETORNE')
-        tipo_expr = 'void'
+        expr_node = None
         
-        if self.current_token.type in ['ID', 'NUMERO', 'LITERAL_CHAR', 'NAO', 'ABRE_PAR', 'VERDADEIRO', 'FALSO', 'MAIS', 'MENOS']:
-            tipo_expr = self.parse_expressao()
+        if self.current_token.type in ['ID', 'NUMERO', 'NUMERO_FLOAT', 'LITERAL_CHAR', 'NAO', 'ABRE_PAR', 'VERDADEIRO', 'FALSO', 'MAIS', 'MENOS']:
+            expr_node = self.parse_expressao()
             
-        if self.tipo_retorno_atual != tipo_expr:
-            self.semantic_error(f"Função deve retornar '{self.tipo_retorno_atual}', mas tentou retornar '{tipo_expr}'.")
+        return ReturnNode(expr_node)
 
     def parse_escreva(self):
         self.eat('ESCREVA')
         self.eat('ABRE_PAR')
-        self.parse_expressao() 
+        expr_node = self.parse_expressao()
         self.eat('FECHA_PAR')
+        
+        return PrintNode(expr_node)
 
     def parse_lista_exp(self):
-        tipos = []
+        args = []
         if self.current_token.type != 'FECHA_PAR':
-            tipos.append(self.parse_expressao())
+            args.append(self.parse_expressao())
             while self.current_token.type == 'VIRGULA':
                 self.eat('VIRGULA')
-                tipos.append(self.parse_expressao())
-        return tipos
+                args.append(self.parse_expressao())
+        return args
 
     def parse_expressao(self):
-        tipo_esq = self.parse_expr_simples()
+        esq_node = self.parse_expr_simples()
+        
         if self.current_token.type in ['IGUAL', 'DIFERENTE', 'MAIOR', 'MENOR', 'MAIOR_IGUAL', 'MENOR_IGUAL']:
-            op = self.current_token.value
-            self.eat(self.current_token.type)
-            tipo_dir = self.parse_expr_simples()
+            op_token = self.current_token
+            self.eat(op_token.type)
+            dir_node = self.parse_expr_simples()
+            return BinOpNode(esq_node, op_token, dir_node)
             
-            if tipo_esq != tipo_dir:
-                self.semantic_error(f"Não é possível comparar tipos incompativeis ('{tipo_esq}' {op} '{tipo_dir}').")
-            return 'booleano' 
-            
-        return tipo_esq
+        return esq_node
 
     def parse_expr_simples(self):
+        op_unario = None
         if self.current_token.type in ['MAIS', 'MENOS', 'NAO']:
-            op_unario = self.current_token.type
-            self.eat(op_unario)
+            op_unario = self.current_token
+            self.eat(op_unario.type)
             
-        tipo_esq = self.parse_termo()
+        esq_node = self.parse_termo()
+        
+        if op_unario:
+            esq_node = UnaryOpNode(op_unario, esq_node)
         
         while self.current_token.type in ['MAIS', 'MENOS', 'OU']:
-            op = self.current_token.type
-            self.eat(op)
-            tipo_dir = self.parse_termo()
+            op_token = self.current_token
+            self.eat(op_token.type)
+            dir_node = self.parse_termo()
+            esq_node = BinOpNode(esq_node, op_token, dir_node)
             
-            if op in ['MAIS', 'MENOS']:
-                if tipo_esq not in ['inteiro', 'float'] or tipo_dir not in ['inteiro', 'float']:
-                    self.semantic_error(f"Operadores '+' e '-' exigem operandos numéricos. Recebeu '{tipo_esq}' e '{tipo_dir}'.")
-                if tipo_esq != tipo_dir:
-                    self.semantic_error(f"Tipagem forte: Incompatibilidade de tipos na operação. Tentou operar '{tipo_esq}' com '{tipo_dir}'.")
-                tipo_esq = tipo_esq
-            elif op == 'OU':
-                if tipo_esq != 'booleano' or tipo_dir != 'booleano':
-                    self.semantic_error("Operador 'ou' exige operandos do tipo 'booleano'.")
-                tipo_esq = 'booleano'
-                
-        return tipo_esq
+        return esq_node
 
     def parse_termo(self):
-        tipo_esq = self.parse_fator()
+        esq_node = self.parse_fator()
         
         while self.current_token.type in ['VEZES', 'DIVIDIDO', 'E']:
-            op = self.current_token.type
-            self.eat(op)
-            tipo_dir = self.parse_fator()
+            op_token = self.current_token
+            self.eat(op_token.type)
+            dir_node = self.parse_fator()
+            esq_node = BinOpNode(esq_node, op_token, dir_node)
             
-            if op in ['VEZES', 'DIVIDIDO']:
-                if tipo_esq not in ['inteiro', 'float'] or tipo_dir not in ['inteiro', 'float']:
-                    self.semantic_error(f"Operadores '*' e '/' exigem operandos numéricos. Recebeu '{tipo_esq}' e '{tipo_dir}'.")
-                if tipo_esq != tipo_dir:
-                    self.semantic_error(f"Tipagem forte: Incompatibilidade de tipos na operação. Tentou operar '{tipo_esq}' com '{tipo_dir}'.")
-                tipo_esq = tipo_esq
-            elif op == 'E':
-                if tipo_esq != 'booleano' or tipo_dir != 'booleano':
-                    self.semantic_error("Operador 'e' exige operandos booleanos.")
-                tipo_esq = 'booleano'
-                
-        return tipo_esq
+        return esq_node
 
     def parse_fator(self):
-        tok = self.current_token.type
-        if tok == 'ID':
+        tok = self.current_token
+        if tok.type == 'ID':
             if self.peek() and self.peek().type == 'ABRE_PAR':
                 return self.parse_chamada_subrotina() 
             else:
-                simbolo = self.buscar_simbolo(self.current_token.value)
                 self.eat('ID')
-                return simbolo.tipo 
-        elif tok == 'NUMERO':
+                return IdentifierNode(tok) 
+                
+        elif tok.type == 'NUMERO':
             self.eat('NUMERO')
-            return 'inteiro'
-        elif tok == 'NUMERO_FLOAT':
+            return NumeroIntNode(tok)
+            
+        elif tok.type == 'NUMERO_FLOAT':
             self.eat('NUMERO_FLOAT')
-            return 'float'
-        elif tok == 'LITERAL_CHAR':
+            return NumeroFloatNode(tok)
+            
+        elif tok.type == 'LITERAL_CHAR':
             self.eat('LITERAL_CHAR')
-            return 'char'
-        elif tok == 'VERDADEIRO':
-            self.eat('VERDADEIRO')
-            return 'booleano'
-        elif tok == 'FALSO':
-            self.eat('FALSO')
-            return 'booleano'
-        elif tok == 'ABRE_PAR':
+            return LiteralCharNode(tok)
+            
+        elif tok.type in ['VERDADEIRO', 'FALSO']:
+            self.eat(tok.type)
+            return BooleanoNode(tok)
+            
+        elif tok.type == 'ABRE_PAR':
             self.eat('ABRE_PAR')
-            tipo = self.parse_expressao()
+            node = self.parse_expressao()
             self.eat('FECHA_PAR')
-            return tipo
+            return node
+            
         else:
             self.error("Fator inválido")

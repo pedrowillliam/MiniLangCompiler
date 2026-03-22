@@ -4,6 +4,7 @@ import os
 try:
     from src.lexer import Lexer
     from src.parser import ParserTopDown
+    from src.ast_printer import ASTPrinter
 except ImportError as e:
     print(f"❌ Erro de importação: {e}")
     print("Verifique se a pasta 'src' existe e contém 'lexer.py' e 'parser.py'.")
@@ -29,7 +30,7 @@ def main():
     print("==========================================")
     
     # Caso teste:
-    arquivo_padrao = 'tests/program_sucess.txt'
+    arquivo_padrao = 'tests/program_test_float.txt'
     
     if len(sys.argv) > 1:
         arquivo_teste = sys.argv[1]
@@ -40,15 +41,23 @@ def main():
     codigo_fonte = carregar_arquivo(arquivo_teste)
 
     try:
-        print("\n[1/2] Iniciando Análise Léxica...")
+        print("\n[1/3] Iniciando Análise Léxica...")
         lexer = Lexer(codigo_fonte)
         print(f"   ✓ Sucesso! {len(lexer.tokens)} tokens gerados.")
 
-        print("[2/2] Iniciando Análise Sintática (Top-Down)...")
+        print("\n[2/3] Iniciando Análise Sintática (Gerando AST)...")
         parser = ParserTopDown(lexer.tokens)
-        parser.parse_programa()
         
-        print("\n✅ COMPILAÇÃO CONCLUÍDA: O código é válido segundo a gramática!")
+        arvore = parser.parse_programa() 
+        
+        print("\n[3/3] Imprimindo a Árvore Sintática Abstrata (AST):")
+        print("--------------------------------------------------")
+        
+        impressor = ASTPrinter()
+        impressor.imprimir(arvore)
+        
+        print("--------------------------------------------------")
+        print("\n✅ COMPILAÇÃO CONCLUÍDA: A árvore está pronta para o Analisador Semântico!")
 
     except SyntaxError as e:
         print(f"\n❌ ERRO SINTÁTICO DETECTADO:")
