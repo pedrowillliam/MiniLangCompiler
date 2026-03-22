@@ -4,7 +4,7 @@ programa testeErro
 }
 
 var contador inteiro;
-var total inteiro;     { <--- Corrigido: Adicionei 'var' aqui }
+var total inteiro;
 
 inicio
   contador : 1;
@@ -14,7 +14,6 @@ inicio
   inicio
      total : total + contador;
      
-     { --- O ERRO REAL ESTÁ AQUI EMBAIXO --- }
      { Falta um ';' após o comando escreva }
      escreva(contador)
      

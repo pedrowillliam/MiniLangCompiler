@@ -23,12 +23,12 @@ inicio
     a : inverteSinal(a);
 
     { TESTE 4 (Opcional - Para forçar erro): }
-    { Descomente a linha abaixo. O semântico deve berrar que a função }
+    { Descomente a linha abaixo. O semântico deve gerar erro semantico: }
     { espera 'float', mas recebeu 'inteiro'. }
-    { a : inverteSinal(inteiroFalso); }
+     a : inverteSinal(inteiroFalso); 
     
     { TESTE 5 (Opcional - Para forçar erro): }
-    { Descomente a linha abaixo. O semântico deve berrar que não pode }
+    { Descomente a linha abaixo. O semântico deve gerar erro semantico: nao e possivel comparar tipos diferenes }
     { comparar tipos diferentes. }
     {flag : a == inteiroFalso;}
 fim
