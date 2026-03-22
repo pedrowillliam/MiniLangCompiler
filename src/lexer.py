@@ -3,10 +3,12 @@ import re
 TOKEN_TYPES = [
     ('COMENTARIO', r'\{.*?\}'),
     ('LITERAL_CHAR', r"'[^']'"),
+    ('NUMERO_FLOAT', r'\d+\.\d+'),
     ('NUMERO',     r'\d+'),
     ('PROGRAMA',   r'programa\b'),    
     ('VAR',        r'var\b'),          
     ('INTEIRO',    r'inteiro\b'),
+    ('FLOAT',      r'float\b'),
     ('BOOLEANO',   r'booleano\b'),
     ('CHAR',         r'char\b'),      
     ('VOID',         r'void\b'),       

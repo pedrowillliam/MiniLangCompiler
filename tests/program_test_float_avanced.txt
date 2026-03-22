@@ -1,0 +1,34 @@
+programa TesteAvancado
+
+var a float;
+var b float;
+var inteiroFalso inteiro;
+var flag booleano;
+
+funcao inverteSinal(valor float): float
+inicio
+    { TESTE 1: Operador unário com float. Deve funcionar perfeitamente. }
+    retorne -valor; 
+fim;
+
+inicio
+    a : 3.14;
+    b : 2.0;
+    inteiroFalso : 3;
+
+    { TESTE 2: Comparação válida. float > float retorna booleano. }
+    flag : a > b;
+    
+    { TESTE 3: Chamada de função com tipo correto. }
+    a : inverteSinal(a);
+
+    { TESTE 4 (Opcional - Para forçar erro): }
+    { Descomente a linha abaixo. O semântico deve berrar que a função }
+    { espera 'float', mas recebeu 'inteiro'. }
+    { a : inverteSinal(inteiroFalso); }
+    
+    { TESTE 5 (Opcional - Para forçar erro): }
+    { Descomente a linha abaixo. O semântico deve berrar que não pode }
+    { comparar tipos diferentes. }
+    {flag : a == inteiroFalso;}
+fim

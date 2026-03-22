@@ -20,7 +20,7 @@ Esta é a gramática em notação BNF (Backus-Naur Form) atualizada para a Fase 
 
 --declarações e tipos
 
-<tipo> ::= inteiro | booleano | char | void
+<tipo> ::= inteiro | float | booleano | char | void | 
 
 <decl_subrotina> ::= <decl_funcao> | <decl_procedimento>
 <decl_procedimento> ::= procedimento <identificador> ( [ <lista_params> ] ) <bloco>;

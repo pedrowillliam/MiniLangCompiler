@@ -84,12 +84,12 @@ class ParserTopDown:
         return ids
 
     def parse_tipo(self):
-        if self.current_token.type in ['INTEIRO', 'BOOLEANO', 'CHAR', 'VOID']:
+        if self.current_token.type in ['INTEIRO', 'FLOAT', 'BOOLEANO', 'CHAR', 'VOID']:
             tipo = self.current_token.type.lower()
             self.eat(self.current_token.type)
             return tipo
         else:
-            self.error("Esperado tipo (inteiro, booleano, char ou void)")
+            self.error("Esperado tipo (inteiro, float, booleano, char ou void)")
 
     def parse_decl_subrotina(self):
         if self.current_token.type == 'PROCEDIMENTO':
@@ -311,9 +311,11 @@ class ParserTopDown:
             tipo_dir = self.parse_termo()
             
             if op in ['MAIS', 'MENOS']:
-                if tipo_esq != 'inteiro' or tipo_dir != 'inteiro':
-                    self.semantic_error("Operadores '+' e '-' exigem operandos do tipo 'inteiro'.")
-                tipo_esq = 'inteiro'
+                if tipo_esq not in ['inteiro', 'float'] or tipo_dir not in ['inteiro', 'float']:
+                    self.semantic_error(f"Operadores '+' e '-' exigem operandos numéricos. Recebeu '{tipo_esq}' e '{tipo_dir}'.")
+                if tipo_esq != tipo_dir:
+                    self.semantic_error(f"Tipagem forte: Incompatibilidade de tipos na operação. Tentou operar '{tipo_esq}' com '{tipo_dir}'.")
+                tipo_esq = tipo_esq
             elif op == 'OU':
                 if tipo_esq != 'booleano' or tipo_dir != 'booleano':
                     self.semantic_error("Operador 'ou' exige operandos do tipo 'booleano'.")
@@ -330,9 +332,11 @@ class ParserTopDown:
             tipo_dir = self.parse_fator()
             
             if op in ['VEZES', 'DIVIDIDO']:
-                if tipo_esq != 'inteiro' or tipo_dir != 'inteiro':
-                    self.semantic_error("Operadores '*' e '/' exigem operandos numéricos.")
-                tipo_esq = 'inteiro'
+                if tipo_esq not in ['inteiro', 'float'] or tipo_dir not in ['inteiro', 'float']:
+                    self.semantic_error(f"Operadores '*' e '/' exigem operandos numéricos. Recebeu '{tipo_esq}' e '{tipo_dir}'.")
+                if tipo_esq != tipo_dir:
+                    self.semantic_error(f"Tipagem forte: Incompatibilidade de tipos na operação. Tentou operar '{tipo_esq}' com '{tipo_dir}'.")
+                tipo_esq = tipo_esq
             elif op == 'E':
                 if tipo_esq != 'booleano' or tipo_dir != 'booleano':
                     self.semantic_error("Operador 'e' exige operandos booleanos.")
@@ -352,6 +356,9 @@ class ParserTopDown:
         elif tok == 'NUMERO':
             self.eat('NUMERO')
             return 'inteiro'
+        elif tok == 'NUMERO_FLOAT':
+            self.eat('NUMERO_FLOAT')
+            return 'float'
         elif tok == 'LITERAL_CHAR':
             self.eat('LITERAL_CHAR')
             return 'char'
