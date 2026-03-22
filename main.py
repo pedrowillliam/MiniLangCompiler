@@ -25,18 +25,12 @@ def carregar_arquivo(caminho):
 
 def main():
     print("==========================================")
-    print("   MINILANG COMPILER - UFAPE (BETA)       ")
+    print("   MINILANG COMPILER - UFAPE       ")
     print("==========================================")
-
-    # ---------------------------------------------------------
-    # 1. Definição do arquivo de entrada (PADRÃO)
-    # ---------------------------------------------------------
     
     # Caso teste:
-    arquivo_padrao = 'tests/program_semantic_errors.txt'
+    arquivo_padrao = 'tests/program_sucess.txt'
     
-    # Lógica de Seleção:
-    # Se o usuário passou um arquivo no terminal, usa ele. Senão, usa o padrão acima.
     if len(sys.argv) > 1:
         arquivo_teste = sys.argv[1]
     else:
@@ -46,16 +40,10 @@ def main():
     codigo_fonte = carregar_arquivo(arquivo_teste)
 
     try:
-        # -----------------------------------------------------
-        # 2. Análise Léxica (Scanner)
-        # -----------------------------------------------------
         print("\n[1/2] Iniciando Análise Léxica...")
         lexer = Lexer(codigo_fonte)
         print(f"   ✓ Sucesso! {len(lexer.tokens)} tokens gerados.")
 
-        # -----------------------------------------------------
-        # 3. Análise Sintática (Parser Top-Down)
-        # -----------------------------------------------------
         print("[2/2] Iniciando Análise Sintática (Top-Down)...")
         parser = ParserTopDown(lexer.tokens)
         parser.parse_programa()
@@ -66,7 +54,6 @@ def main():
         print(f"\n❌ ERRO SINTÁTICO DETECTADO:")
         print(f"   {e}")
     except Exception as e:
-        # Verifica se é um erro semântico que nós mesmos criamos
         if "Erro Semântico" in str(e):
             print(f"\n❌ ERRO SEMÂNTICO DETECTADO:")
             print(f"   {e}")

@@ -1,22 +1,20 @@
 import re
 
-# Definições de Tokens (Regex)
-# A adição de \\b garante que palavras como 'exemplo' não sejam confundidas com 'e'
 TOKEN_TYPES = [
     ('COMENTARIO', r'\{.*?\}'),
     ('LITERAL_CHAR', r"'[^']'"),
     ('NUMERO',     r'\d+'),
-    ('PROGRAMA',   r'programa\b'),     # Adicionado \b
-    ('VAR',        r'var\b'),          # Adicionado \b
+    ('PROGRAMA',   r'programa\b'),    
+    ('VAR',        r'var\b'),          
     ('INTEIRO',    r'inteiro\b'),
     ('BOOLEANO',   r'booleano\b'),
-    ('CHAR',         r'char\b'),       # NOVO: Palavra reservada char
-    ('VOID',         r'void\b'),       # NOVO: Palavra reservada void
+    ('CHAR',         r'char\b'),      
+    ('VOID',         r'void\b'),       
     ('PROCEDIMENTO', r'procedimento\b'),
     ('FUNCAO',     r'funcao\b'),
     ('INICIO',     r'inicio\b'),
     ('FIM',        r'fim\b'),
-    ('SE',         r'se\b'),           # Importante \b
+    ('SE',         r'se\b'),           
     ('ENTAO',      r'entao\b'),
     ('SENAO',      r'senao\b'),
     ('ENQUANTO',   r'enquanto\b'),
@@ -25,12 +23,12 @@ TOKEN_TYPES = [
     ('ESCREVA',    r'escreva\b'),
     ('BREAK',      r'break\b'),
     ('CONTINUE',   r'continue\b'),
-    ('E',          r'e\b'),            # <--- O CULPADO ESTAVA AQUI!
+    ('E',          r'e\b'),            
     ('OU',         r'ou\b'),
     ('NAO',        r'nao\b'),
     ('VERDADEIRO', r'verdadeiro\b'),
     ('FALSO',      r'falso\b'),
-    ('ID',         r'[a-zA-Z][a-zA-Z0-9]*'), # Identificadores
+    ('ID',         r'[a-zA-Z][a-zA-Z0-9]*'), 
     ('IGUAL',      r'=='),
     ('DIFERENTE',  r'!='),
     ('MAIOR_IGUAL', r'>='),
@@ -81,7 +79,6 @@ class Lexer:
             elif typ == 'COMENTARIO':
                 self.current_line += val.count('\n')
             elif typ == 'MISMATCH':
-                # Melhoria na mensagem de erro léxico
                 raise SyntaxError(f"Erro Léxico: Caractere ilegal '{val}' na linha {self.current_line}")
             else:
                 self.tokens.append(Token(typ, val, self.current_line))

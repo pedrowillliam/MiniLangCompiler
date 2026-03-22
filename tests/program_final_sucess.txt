@@ -12,6 +12,8 @@ inicio
     retorne resultadoLocal;
 fim;
 
+
+
 { Procedimento (void) que usa o tipo Char }
 procedimento processarLetra(letra char)
 inicio

@@ -15,7 +15,6 @@ inicio
   
   se (flag) entao
   inicio
-     { Nota: Adicionei a vírgula entre 10 e 20 pois a gramática exige }
      resultado : calcular(10, 20); 
      escreva(resultado);
   fim;

@@ -6,9 +6,8 @@ class ParserTopDown:
         self.pos = 0
         self.current_token = self.tokens[self.pos]
         
-        # --- SEMÂNTICO: Iniciando a Tabela de Símbolos e controle de retorno ---
         self.tabela = TabelaSimbolos()
-        self.tipo_retorno_atual = None  # Guarda o tipo de retorno da função que estamos analisando
+        self.tipo_retorno_atual = None 
 
     def error(self, msg):
         raise SyntaxError(f"Erro Sintático na linha {self.current_token.line}: {msg}. Encontrado: '{self.current_token.value}'")
@@ -63,8 +62,8 @@ class ParserTopDown:
 
     def parse_decl_var(self):
         self.eat('VAR')
-        ids = self.parse_lista_ids()  # SEMÂNTICO: Retorna lista de nomes
-        tipo = self.parse_tipo()      # SEMÂNTICO: Retorna o tipo
+        ids = self.parse_lista_ids() 
+        tipo = self.parse_tipo()      
         
         if tipo == 'void':
             self.semantic_error("Variáveis não podem ser do tipo 'void'.")
@@ -85,9 +84,8 @@ class ParserTopDown:
         return ids
 
     def parse_tipo(self):
-        # SEMÂNTICO: Atualizado para suportar char e void
         if self.current_token.type in ['INTEIRO', 'BOOLEANO', 'CHAR', 'VOID']:
-            tipo = self.current_token.type.lower() # Ex: 'INTEIRO' vira 'inteiro'
+            tipo = self.current_token.type.lower()
             self.eat(self.current_token.type)
             return tipo
         else:
@@ -176,7 +174,7 @@ class ParserTopDown:
     def parse_comando(self):
         tok = self.current_token.type
         if tok == 'INICIO':
-            self.tabela.entrar_escopo() # Bloco aninhado cria escopo
+            self.tabela.entrar_escopo()
             self.parse_corpo()
             self.tabela.sair_escopo()
         elif tok == 'SE':
@@ -266,7 +264,6 @@ class ParserTopDown:
         self.eat('RETORNE')
         tipo_expr = 'void'
         
-        # Se houver expressão após o retorne
         if self.current_token.type in ['ID', 'NUMERO', 'LITERAL_CHAR', 'NAO', 'ABRE_PAR', 'VERDADEIRO', 'FALSO', 'MAIS', 'MENOS']:
             tipo_expr = self.parse_expressao()
             
@@ -276,7 +273,7 @@ class ParserTopDown:
     def parse_escreva(self):
         self.eat('ESCREVA')
         self.eat('ABRE_PAR')
-        self.parse_expressao() # Qualquer tipo pode ser escrito
+        self.parse_expressao() 
         self.eat('FECHA_PAR')
 
     def parse_lista_exp(self):
@@ -288,7 +285,6 @@ class ParserTopDown:
                 tipos.append(self.parse_expressao())
         return tipos
 
-    # --- Resolução Lógica e Aritmética ---
     def parse_expressao(self):
         tipo_esq = self.parse_expr_simples()
         if self.current_token.type in ['IGUAL', 'DIFERENTE', 'MAIOR', 'MENOR', 'MAIOR_IGUAL', 'MENOR_IGUAL']:
@@ -296,10 +292,9 @@ class ParserTopDown:
             self.eat(self.current_token.type)
             tipo_dir = self.parse_expr_simples()
             
-            # Tipos incompativeis não podem ser comparados
             if tipo_esq != tipo_dir:
                 self.semantic_error(f"Não é possível comparar tipos incompativeis ('{tipo_esq}' {op} '{tipo_dir}').")
-            return 'booleano' # Operações relacionais sempre retornam booleano
+            return 'booleano' 
             
         return tipo_esq
 
@@ -349,11 +344,11 @@ class ParserTopDown:
         tok = self.current_token.type
         if tok == 'ID':
             if self.peek() and self.peek().type == 'ABRE_PAR':
-                return self.parse_chamada_subrotina() # Retorna o tipo da função
+                return self.parse_chamada_subrotina() 
             else:
                 simbolo = self.buscar_simbolo(self.current_token.value)
                 self.eat('ID')
-                return simbolo.tipo # Retorna o tipo da variável
+                return simbolo.tipo 
         elif tok == 'NUMERO':
             self.eat('NUMERO')
             return 'inteiro'
