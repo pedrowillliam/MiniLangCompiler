@@ -46,6 +46,11 @@ def main():
         lexer = Lexer(codigo_fonte)
         print(f"   ✓ Sucesso! {len(lexer.tokens)} tokens gerados.")
 
+        print("\n--- LISTA DE TOKENS GERADOS (LEXER) ---")
+        for token in lexer.tokens:
+            print(f"  {token}")
+        print("---------------------------------------")
+
         print("\n[2/4] Iniciando Análise Sintática (Gerando AST)...")
         parser = ParserTopDown(lexer.tokens)
         
