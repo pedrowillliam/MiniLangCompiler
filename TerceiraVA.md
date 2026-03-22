@@ -46,32 +46,34 @@ Separar a arvore (sintaxe) das regras de negocio (semantica) torna o compilador 
 
 3. Implementação da semantic.py
 
-Depois que a árvore (AST) ficou pronta, a gente precisava de algo que fizesse o compilador "entender" o que o código estava tentando fazer. Não adianta a frase estar escrita certa (sintaxe) se ela não faz sentido (semântica). Por isso, criamos o Analisador Semântico.
+Após a construção da AST, foi necessária a implementação de um mecanismo para validar o "sentido" do código. Não basta a sintaxe estar correta se as operações não fizerem sentido lógico. Para isso, criamos o Analisador Semântico.
 
-.O que ele faz na prática:
+O que ele faz na prática:
 
-- Roda a Árvore Inteira: Ele usa o esquema de "visitante" (Visitor). Ele vai em cada galho da árvore e checa as regras. Se ele vê uma soma (+), ele para e pergunta: "O que tem do lado esquerdo? E do direito?". Se um for inteiro e o outro char, ele trava e avisa o erro.
+.Varredura da Árvore (Visitor Pattern): O analisador percorre cada nó da árvore validando as regras de negócio da linguagem. Ao encontrar uma operação de soma (+), por exemplo, ele verifica os nós filhos (esquerdo e direito). Se houver incompatibilidade (como somar um inteiro com um char), o processo é interrompido e o erro é reportado.
 
--Uso da Tabela de Símbolos: É aqui que a tabela é utilizada. Quando o código declara var x inteiro, o semântico anota isso. Se lá na frente o usuário tentar fazer x : 'A', o semântico olha na tabela, vê que x só aceita números e barra a atribuição.
+.Uso e Alimentação da Tabela de Símbolos: É nesta etapa que a tabela brilha. Quando o código declara var x inteiro, o semântico registra o símbolo, sua categoria e seu tipo. Além disso, a tabela utiliza uma pilha de escopos, garantindo que variáveis locais de uma função não interfiram em variáveis globais ou de outras funções. Se o programador tentar atribuir um valor incompatível (x : 'A'), o semântico consulta a tabela e bloqueia a ação.
 
--Vigia das Funções: A gente programou ele para ser bem rígido com funções. Se a função pede dois números, e você passa só um, ele acusa o erro. Se a função promete devolver um booleano e você tenta devolver um inteiro, ele também não deixa passar.
+.Validação Estrita de Funções: O analisador é rigoroso com as assinaturas das funções. Ele garante que a quantidade e o tipo dos argumentos passados na chamada correspondam exatamente aos parâmetros exigidos na declaração. Também valida se o tipo de retorno coincide com o que a função promete devolver.
 
--Regras do IF e WHILE: Outra coisa importante foi garantir que o teste do se e do enquanto seja sempre uma pergunta de sim ou não (booleano). Se o programador colocar se (10 + 5), o semântico avisa que isso não faz sentido como condição.
+.Regras de Controle de Fluxo (IF e WHILE): Garantimos que as expressões de teste das estruturas de controle resultem estritamente em um valor booleano. Se o programador escrever algo como se (10 + 5), o semântico acusará que a condição é inválida.
 
 .Por que isso foi importante?
-Essa foi a parte que deu "inteligência" ao projeto. Agora o compilador não apenas lê o código, mas garante que o programador não cometa erros de lógica básica, como misturar tipos de dados ou esquecer de declarar variáveis. Isso deixa a nossa linguagem muito mais segura e profissional.
+Essa etapa deu "inteligência" ao projeto. Agora o compilador não apenas estrutura o código, mas garante que o programador não cometa erros de lógica fundamentais, como misturar tipos de dados de forma insegura, violar escopos ou esquecer declarações. Isso eleva a robustez e a segurança da nossa linguagem.
 
 4. Fluxo de Execução do Compilador (Pipeline)
 Com as mudanças da 3ª VA, o caminho que o código percorre desde o arquivo de texto até a validação final é:
 
-    1. Análise Léxica (lexer.py): O código-fonte é lido e transformado em uma lista de Tokens. É aqui que todos os tipos são identificados pela primeira vez.
+    1.Ponto de Entrada e Orquestração (main.py): Atua como o "maestro" do compilador. Ele é responsável por carregar o arquivo de texto contendo o código-fonte, orquestrar a chamada de cada fase na ordem correta, imprimir os relatórios de execução no terminal (como a lista de tokens e a impressão da AST) e capturar as exceções, exibindo mensagens de erro formatadas e precisas para o usuário.
 
-    2. Análise Sintática (parser.py): O Parser consome os tokens e verifica se a "gramática" está correta (parênteses no lugar, pontos e vírgulas, etc). Em vez de apenas validar, ele agora constrói a AST (Árvore Sintática Abstrata), que é o mapa estrutural do programa.
+    2. Análise Léxica (lexer.py): O código-fonte é lido e transformado em uma lista de Tokens. É aqui que todos os tipos são identificados pela primeira vez.
 
-    3. Visualização da Árvore (ast_printer.py): Antes de validar a lógica, a árvore é percorrida para ser impressa no terminal. Isso serve para nós, desenvolvedores, confirmarmos que o Parser entendeu a hierarquia correta (como a precedência das operações matemáticas).
+    3. Análise Sintática (parser.py): O Parser consome os tokens e verifica se a "gramática" está correta (parênteses no lugar, pontos e vírgulas, etc). Em vez de apenas validar, ele agora constrói a AST (Árvore Sintática Abstrata), que é o mapa estrutural do programa.
 
-    4.Suporte da Tabela de Símbolos (tabela_simbolos.py): Diferente das outras fases, a Tabela não é um "momento" único, mas uma estrutura de suporte chamada principalmente durante a análise semântica. Ela funciona como o "banco de dados" do compilador, guardando quem são as variáveis, seus tipos e em qual escopo (global ou local) elas existem.
+    4. Visualização da Árvore (ast_printer.py): Antes de validar a lógica, a árvore é percorrida para ser impressa no terminal. Isso serve para nós, desenvolvedores, confirmarmos que o Parser entendeu a hierarquia correta (como a precedência das operações matemáticas).
 
-    5. Análise Semântica (semantic.py): A AST pronta é entregue ao Analisador Semântico. Ele "viaja" por cada nó da árvore usando a Tabela de Símbolos para garantir que as regras de tipo, escopo e declaração sejam respeitadas.
+    5.Suporte da Tabela de Símbolos (tabela_simbolos.py): Diferente das outras fases, a Tabela não é um "momento" único, mas uma estrutura de suporte chamada principalmente durante a análise semântica. Ela funciona como o "banco de dados" do compilador, guardando quem são as variáveis, seus tipos e em qual escopo (global ou local) elas existem.
 
-    6. Resultado Final: Se o programa passar por esse fluxo sem erros, temos a garantia de que ele está pronto para ser executado ou traduzido para outra linguagem, pois sua estrutura e sua lógica foram 100% verificadas.
+    6. Análise Semântica (semantic.py): A AST pronta é entregue ao Analisador Semântico. Ele "viaja" por cada nó da árvore usando a Tabela de Símbolos para garantir que as regras de tipo, escopo e declaração sejam respeitadas.
+
+    7. Resultado Final: Se o programa passar por esse fluxo sem erros, temos a garantia de que ele está pronto para ser executado ou traduzido para outra linguagem, pois sua estrutura e sua lógica foram 100% verificadas.
