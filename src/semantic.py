@@ -30,6 +30,7 @@ class AnalisadorSemantico:
 
     def visit_ProgramNode(self, node):
         self.analisar(node.block)
+        return None
 
     def visit_BlockNode(self, node):
         # 1. Processa declarações de variáveis
@@ -43,6 +44,8 @@ class AnalisadorSemantico:
         # 3. Processa comandos do corpo
         for cmd in node.comandos:
             self.analisar(cmd)
+        
+        return None
 
     def visit_VarDeclNode(self, node):
         for id_node in node.id_nodes:
@@ -55,6 +58,8 @@ class AnalisadorSemantico:
                 self.semantic_error(id_node, "Variáveis não podem ser do tipo 'void'.")
                 
             self.tabela.declarar(nome, 'variavel', node.type_name)
+        
+        return None
 
     # --- VISITAÇÃO DE COMANDOS ---
 
@@ -73,6 +78,8 @@ class AnalisadorSemantico:
         # TIPAGEM FORTE: Não permite atribuição entre tipos diferentes, mesmo que sejam compatíveis (ex: int para float)
         if simbolo.tipo != tipo_expr:
             self.semantic_error(node.id_node, f"Atribuição inválida. Variável '{nome}' é '{simbolo.tipo}', mas recebeu '{tipo_expr}'.")
+        
+        return None
 
     # --- VISITAÇÃO DE EXPRESSÕES (Onde a mágica acontece) ---
 
@@ -143,15 +150,39 @@ class AnalisadorSemantico:
         if tipo_cond != 'booleano':
             self.semantic_error(node.condition, "A condição do 'se' deve ser booleana.")
         
-        self.analisar(node.true_block)
+        # Se o bloco é um BlockNode com comandos internos, cria novo escopo
+        if isinstance(node.true_block, BlockNode) and len(node.true_block.vars_decl) > 0:
+            self.tabela.entrar_escopo()
+            self.analisar(node.true_block)
+            self.tabela.sair_escopo()
+        else:
+            self.analisar(node.true_block)
+        
         if node.false_block:
-            self.analisar(node.false_block)
+            # Se o bloco é um BlockNode com comandos internos, cria novo escopo
+            if isinstance(node.false_block, BlockNode) and len(node.false_block.vars_decl) > 0:
+                self.tabela.entrar_escopo()
+                self.analisar(node.false_block)
+                self.tabela.sair_escopo()
+            else:
+                self.analisar(node.false_block)
+        
+        return None
 
     def visit_WhileNode(self, node):
         tipo_cond = self.analisar(node.condition)
         if tipo_cond != 'booleano':
             self.semantic_error(node.condition, "A condição do 'enquanto' deve ser booleana.")
-        self.analisar(node.body)
+        
+        # Se o corpo é um BlockNode com comandos internos, cria novo escopo
+        if isinstance(node.body, BlockNode) and len(node.body.vars_decl) > 0:
+            self.tabela.entrar_escopo()
+            self.analisar(node.body)
+            self.tabela.sair_escopo()
+        else:
+            self.analisar(node.body)
+        
+        return None
 
     # --- SUB-ROTINAS (FUNÇÕES E PROCEDIMENTOS) ---
 
@@ -178,6 +209,8 @@ class AnalisadorSemantico:
         # 6. Sai do escopo e restaura estado
         self.tabela.sair_escopo()
         self.tipo_retorno_atual = old_retorno
+        
+        return None
 
     def visit_ReturnNode(self, node):
         tipo_ret = 'void'
@@ -186,6 +219,8 @@ class AnalisadorSemantico:
         
         if tipo_ret != self.tipo_retorno_atual:
             self.semantic_error(node, f"Retorno inválido. Esperava '{self.tipo_retorno_atual}', mas retornou '{tipo_ret}'.")
+        
+        return None
 
     def visit_FunctionCallNode(self, node):
         nome = node.id_node.name
@@ -208,9 +243,10 @@ class AnalisadorSemantico:
     # --- EXTRAS ---
     def visit_PrintNode(self, node):
         self.analisar(node.expr)
+        return None
 
     def visit_BreakNode(self, node):
-        pass # Poderia validar se está dentro de um While no futuro
+        return None  # Poderia validar se está dentro de um While no futuro
 
     def visit_ContinueNode(self, node):
-        pass
+        return None

@@ -1,0 +1,19 @@
+programa testeEscopo
+var x inteiro;
+var y inteiro;
+
+funcao somar(a inteiro b inteiro): inteiro
+inicio
+  retorne a + b;
+fim;
+
+inicio
+  x : 10;
+  y : 20;
+  
+  se (x > 5) entao
+  inicio
+    y : somar(x, y);
+    x : y;
+  fim;
+fim
